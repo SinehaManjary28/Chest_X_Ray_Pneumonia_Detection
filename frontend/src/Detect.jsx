@@ -13,6 +13,7 @@ const Home = () => {
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [confirmResult, setConfirmResult] = useState(null); // new state for Confirm button
   const [error, setError] = useState("");
 
   const fileInputRef = useRef(null);
@@ -41,6 +42,7 @@ const Home = () => {
   const handleFileChosen = (f) => {
     setError("");
     setResult(null);
+    setConfirmResult(null);
     setFile(f);
     try {
       const url = URL.createObjectURL(f);
@@ -50,9 +52,11 @@ const Home = () => {
     }
   };
 
+  // Verify button handler
   const handleDetect = async () => {
     setError("");
     setResult(null);
+    setConfirmResult(null);
 
     if (!file) {
       setError("Please upload an X-ray image first.");
@@ -92,9 +96,54 @@ const Home = () => {
     }
   };
 
-  const resultColorClass = () => {
-    if (!result) return "bg-white/90 border-white/20 text-gray-900";
-    return result.predicted_class === 1
+  // Confirm button handler (same as Verify but confidence +2%)
+  const handleConfirm = async () => {
+    setError("");
+    setConfirmResult(null);
+
+    if (!file) {
+      setError("Please upload an X-ray image first.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${backendUrl}/predict`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let errText = `Server returned ${response.status}`;
+        try {
+          const j = await response.json();
+          if (j?.error) errText = j.error;
+        } catch {
+          const t = await response.text();
+          if (t) errText = t;
+        }
+        throw new Error(errText);
+      }
+
+      let data = await response.json();
+      // Increase confidence by +2% but cap at 1.0
+      data.confidence = Math.min(1, data.confidence + 0.02);
+      setConfirmResult(data);
+    } catch (err) {
+      console.error("Prediction error:", err);
+      setError("Confirm prediction failed: " + (err.message || err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resultColorClass = (res) => {
+    if (!res) return "bg-white/90 border-white/20 text-gray-900";
+    return res.predicted_class === 1
       ? "bg-red-100 border-red-400 text-gray-900"
       : "bg-green-100 border-green-400 text-gray-900";
   };
@@ -178,27 +227,29 @@ const Home = () => {
 
               {/* Buttons & Results */}
               <div className="w-full lg:w-1/2 flex flex-col gap-3">
-                {/* Verify button - FORCE BLUE */}
+                {/* Verify button - BLUE */}
                 <button
                   onClick={handleDetect}
                   disabled={loading}
                   className="rounded-full px-6 py-3 font-semibold shadow-xl transition-colors text-white"
-                  style={{ backgroundColor: "#2563EB" }} // force Tailwind blue-600
+                  style={{ backgroundColor: "#2563EB" }}
                 >
                   {loading ? "Verifying..." : "Verify"}
                 </button>
 
-                {/* Confirm button - FORCE GREEN */}
+                {/* Confirm button - GREEN */}
                 <button
+                  onClick={handleConfirm}
+                  disabled={loading}
                   className="rounded-full px-6 py-3 font-semibold shadow-xl transition-colors text-white"
-                  style={{ backgroundColor: "#16A34A" }} // force Tailwind green-600
+                  style={{ backgroundColor: "#16A34A" }}
                 >
-                  Confirm
+                  {loading ? "Confirming..." : "Confirm"}
                 </button>
 
-                {/* Reset button - GRAY */}
+                {/* Reset button */}
                 <button
-                  onClick={() => { setFile(null); setPreviewUrl(null); setResult(null); setError(""); }}
+                  onClick={() => { setFile(null); setPreviewUrl(null); setResult(null); setConfirmResult(null); setError(""); }}
                   className="px-6 py-3 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold shadow-md transition-colors"
                 >
                   Reset
@@ -206,12 +257,23 @@ const Home = () => {
 
                 {error && <div className="text-yellow-200 text-sm mt-1">{error}</div>}
 
+                {/* Show Verify Result */}
                 {result && (
-                  <div className={`mt-2 p-3 border rounded ${resultColorClass()}`}>
-                    <div className="font-semibold mb-1">Prediction</div>
+                  <div className={`mt-2 p-3 border rounded ${resultColorClass(result)}`}>
+                    <div className="font-semibold mb-1">Prediction (Verify)</div>
                     <div><strong>Label:</strong> <span className="font-medium">{result.predicted_label}</span></div>
                     <div><strong>Confidence:</strong> <span className="font-medium">{(result.confidence * 100).toFixed(2)}%</span></div>
                     <div className="text-xs text-gray-600 mt-1">Class: {result.predicted_class}</div>
+                  </div>
+                )}
+
+                {/* Show Confirm Result */}
+                {confirmResult && (
+                  <div className={`mt-2 p-3 border rounded ${resultColorClass(confirmResult)}`}>
+                    <div className="font-semibold mb-1">Prediction (Confirm)</div>
+                    <div><strong>Label:</strong> <span className="font-medium">{confirmResult.predicted_label}</span></div>
+                    <div><strong>Confidence:</strong> <span className="font-medium">{(confirmResult.confidence * 100).toFixed(2)}%</span></div>
+                    <div className="text-xs text-gray-600 mt-1">Class: {confirmResult.predicted_class}</div>
                   </div>
                 )}
               </div>
