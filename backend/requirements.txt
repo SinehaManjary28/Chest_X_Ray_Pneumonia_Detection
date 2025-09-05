@@ -1,0 +1,12 @@
+# Core backend dependencies
+Flask==2.3.3
+flask-cors==3.0.10
+numpy>=1.23,<2.0
+Pillow>=10.0.0,<11.0.0
+
+# TensorFlow (pip will pick the newest version compatible with Python 3.10)
+tensorflow
+
+# Production WSGI servers
+gunicorn==20.1.0   # use on Linux/macOS/WSL or in Docker
+waitress==2.1.2    # use on Windows production servers

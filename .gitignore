@@ -1,0 +1,22 @@
+# Python
+backend/venv/
+__pycache__/
+*.pyc
+
+# Node.js
+frontend/node_modules/
+frontend/dist/
+*.log
+
+# Environment files
+.env
+.DS_Store
+
+# Model files (big!)
+backend/model/*.keras
+backend/model/*.h5
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
