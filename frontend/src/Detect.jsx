@@ -2,12 +2,7 @@
 import React, { useState, useRef } from "react";
 import mainImage from "./assets/images/detectbg.png";
 
-/**
- * Detect.jsx – Pneumonia Detection UI
- * Contrast fixes: close button and reset button made clearly visible.
- * Verify button label preserved and functionality unchanged.
- */
-const backendUrl = "http://127.0.0.1:5000"; // change for LAN/production if needed
+const backendUrl = "http://127.0.0.1:5000"; // backend URL
 
 const Home = () => {
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
@@ -22,15 +17,11 @@ const Home = () => {
 
   const fileInputRef = useRef(null);
 
-  // Popup handlers
   const handleConfirmationClick = () => setShowConfirmationPopup(true);
   const handleVerificationClick = () => setShowVerificationPopup(true);
   const closeConfirmationPopup = () => setShowConfirmationPopup(false);
-  const closeVerificationPopup = () => {
-    setShowVerificationPopup(false);
-  };
+  const closeVerificationPopup = () => setShowVerificationPopup(false);
 
-  // Drag & drop handlers
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -59,7 +50,6 @@ const Home = () => {
     }
   };
 
-  // POST to backend (no change)
   const handleDetect = async () => {
     setError("");
     setResult(null);
@@ -143,16 +133,12 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Verification popup (fixed, centered) */}
+      {/* Verification popup */}
       {showVerificationPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          {/* dark background */}
           <div className="absolute inset-0 bg-black/50" onClick={closeVerificationPopup} />
 
-          {/* popup card */}
           <div className="relative w-full max-w-3xl mx-auto rounded-2xl p-6" style={{ backgroundColor: "rgba(30, 58, 138, 0.96)" }}>
-
-            {/* Close button: visible white rounded square with dark X */}
             <button
               onClick={closeVerificationPopup}
               aria-label="Close"
@@ -165,50 +151,55 @@ const Home = () => {
             <h2 className="text-2xl font-bold text-white mb-3">Upload X-ray for Verification</h2>
             <p className="text-sm text-white/90 mb-4">Drag & drop or click the area below. We accept PNG/JPG/JPEG/TIFF.</p>
 
-            {/* Upload area */}
             <div
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-white/25 p-6 rounded-lg text-center cursor-pointer hover:border-white/40 transition-colors bg-gradient-to-br from-white/5 to-white/3"
             >
-              <input id="verification-file-input" ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileInputChange} />
-              <svg className="w-12 h-12 mx-auto text-white/80 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileInputChange} />
+              <svg className="w-12 h-12 mx-auto text-white/80 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
               </svg>
               <p className="text-white/90">Click or drag a chest X-ray image here</p>
               {file && <p className="mt-2 text-sm text-white/90">Selected: {file.name} — {(file.size/1024).toFixed(0)} KB</p>}
             </div>
 
-            {/* Preview + verify + result */}
             <div className="mt-4 flex flex-col lg:flex-row gap-4 items-start lg:items-center">
               <div className="w-full lg:w-1/2">
                 {previewUrl ? (
                   <img src={previewUrl} alt="preview" className="w-full rounded-md border-4 border-white/90" />
                 ) : (
-                  <div className="w-full h-40 rounded-md border border-white/20 flex items-center justify-center text-sm text-white/80">No preview available</div>
+                  <div className="w-full h-40 rounded-md border border-white/20 flex items-center justify-center text-sm text-white/80">
+                    No preview available
+                  </div>
                 )}
               </div>
 
+              {/* Buttons & Results */}
               <div className="w-full lg:w-1/2 flex flex-col gap-3">
-                {/* Verify button — label changed only, functionality unchanged */}
+                {/* Verify button - FORCE BLUE */}
                 <button
                   onClick={handleDetect}
                   disabled={loading}
-                  className="relative overflow-hidden rounded-full px-6 py-3 text-white font-semibold shadow-xl"
-                  style={{ backgroundColor: "#0b5ed7" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0a58ca")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#0b5ed7")}
+                  className="rounded-full px-6 py-3 font-semibold shadow-xl transition-colors text-white"
+                  style={{ backgroundColor: "#2563EB" }} // force Tailwind blue-600
                 >
-                  <span className="relative z-10">{loading ? "Verifying..." : "Verify"}</span>
-                  <div className="absolute inset-0 -translate-x-full transition-transform duration-700 pointer-events-none" style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))" }} />
+                  {loading ? "Verifying..." : "Verify"}
                 </button>
 
-                {/* Reset button: high-contrast, visible when enabled and when disabled */}
+                {/* Confirm button - FORCE GREEN */}
+                <button
+                  className="rounded-full px-6 py-3 font-semibold shadow-xl transition-colors text-white"
+                  style={{ backgroundColor: "#16A34A" }} // force Tailwind green-600
+                >
+                  Confirm
+                </button>
+
+                {/* Reset button - GRAY */}
                 <button
                   onClick={() => { setFile(null); setPreviewUrl(null); setResult(null); setError(""); }}
-                  className={`px-4 py-2 rounded-md border ${file ? 'bg-white text-gray-900 border-gray-200' : 'bg-white/60 text-gray-700 border-gray-200'} font-medium`}
-                  disabled={false}
+                  className="px-6 py-3 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold shadow-md transition-colors"
                 >
                   Reset
                 </button>
@@ -225,20 +216,6 @@ const Home = () => {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation popup (fixed) */}
-      {showConfirmationPopup && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={closeConfirmationPopup} />
-          <div className="relative bg-white rounded-xl p-6 max-w-xl w-11/12">
-            <button onClick={closeConfirmationPopup} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
-            <h3 className="text-2xl font-bold mb-2">How it works</h3>
-            <p className="text-sm text-gray-700">
-              We preprocess the uploaded X-ray to 224×224 RGB and normalize pixel values, then run inference using the ViT model.
-            </p>
           </div>
         </div>
       )}
