@@ -61,7 +61,7 @@ In the medical field, double confirmation increases trust and reliability for di
 ---
 
 ## To run the server:
-backend:
+Backend:
 - venv\Scripts\activate   # Windows
 - pip install -r requirements.txt
 - python app.py
